@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+
+kind: Deployment
+metadata:
+  name: vue-docker
+  namespace: howest-fastapi
+spec:
+  replicas: 10
+  selector:
+      matchLabels:
+        app: vue-docker # This makes sure your deployment searches for pods with the label: "app=vue-docker"
+  template:
+    metadata:
+      labels:
+        app: vue-docker # This is the label that will be applied to each pod
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - k3d-k3s-default-agent-0
+                - k3d-k3s-default-agent-1
+      containers:
+      - name: vue-container
+        image: nathansegers/vue-docker
+        ports:
+        - containerPort: 80
+        resources: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-vue-docker
+  namespace: howest-fastapi
+spec:
+  type: NodePort
+  selector:
+    app: vue-docker
+  ports:
+    - port: 80
+      nodePort: 30001
